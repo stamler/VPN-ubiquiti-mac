@@ -1,0 +1,32 @@
+# create a shared secret in operational Mode
+generate vpn openvpn-key /config/auth/openvpn.static.secret
+configure
+
+# configure the tunnel
+set interfaces openvpn vtun0
+set interfaces openvpn vtun0 description "OpenVPN endpoint"
+set interfaces openvpn vtun0 encryption aes256
+set interfaces openvpn vtun0 hash sha256
+set interfaces openvpn vtun0 local-address 10.42.22.1
+set interfaces openvpn vtun0 local-port 1194
+set interfaces openvpn vtun0 mode site-to-site
+set interfaces openvpn vtun0 openvpn-option "--comp-lzo yes"
+set interfaces openvpn vtun0 remote-address 10.42.22.2
+set interfaces openvpn vtun0 shared-secret-key-file /config/auth/openvpn.static.secret
+
+# add the tunnel to a zone
+set zone-policy zone MGMT interface vtun0
+
+# create firewall rule to allow connection
+set firewall name WAN_LOCAL rule 310 action accept
+set firewall name WAN_LOCAL rule 310 description "OpenVPN"
+set firewall name WAN_LOCAL rule 310 log enable
+set firewall name WAN_LOCAL rule 310 protocol udp
+set firewall name WAN_LOCAL rule 310 destination port 1194
+
+commit
+save
+exit
+
+# After connecting, in regular mode
+show openvpn status site-to-site
